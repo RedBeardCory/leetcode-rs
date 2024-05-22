@@ -1,4 +1,4 @@
-use std::slice::Chunks;
+use std::{borrow::BorrowMut, slice::Chunks};
 
 /// Palindrome Partitioning
 ///
@@ -14,44 +14,32 @@ struct Solution {}
 
 impl Solution {
     pub fn partition(s: String) -> Vec<Vec<String>> {
-        let mut strings: Vec<Vec<String>> = Vec::new();
-        let mut i = 1;
-        // split string up in increments
-        while i <= s.len() {
-            let char_arr = s.chars().collect::<Vec<char>>();
-            let rev_char_arr = s.chars().rev().collect::<Vec<char>>();
-            let chunks = char_arr.chunks(i);
-            let rev_chunks = rev_char_arr.chunks(i);
-            let mut set: Vec<String> = Vec::new();
-            if Self::check_all_chunks(chunks.clone()) {
-                chunks.for_each(|chunk| set.push(chunk.iter().collect()))
-            }
+        let mut res: Vec<Vec<String>> = Vec::new();
+        Self::dfs(&mut res, &s, 0, &mut Vec::<String>::new());
+        return res;
+    }
 
-            if !set.is_empty() {
-                strings.push(set.clone());
-            }
-
-            let mut rev_set: Vec<String> = Vec::new();
-            if Self::check_all_chunks(rev_chunks.clone()) {
-                rev_chunks
-                    .rev()
-                    .for_each(|chunk| rev_set.push(chunk.iter().collect()))
-            }
-
-            if !rev_set.is_empty() && &rev_set != &set {
-                strings.push(rev_set);
-            }
-
-            i += 1;
+    /// depth first search
+    pub fn dfs(res: &mut Vec<Vec<String>>, s: &String, ind: usize, cur: &mut Vec<String>) {
+        if ind >= s.len() {
+            res.push(cur.to_vec());
+            return;
         }
-        return strings;
+
+        for i in ind..s.len() {
+            // TIL: Slices in rust are [starting_index..length]
+            //   so "abc"[0..1] == "a" and "abc"[0..2] == "ab"
+            let sub_string = s.as_str()[ind..(i + 1)].to_owned();
+
+            if Self::is_palindrome(&sub_string) {
+                cur.push(sub_string);
+                Self::dfs(res, s, i + 1, cur);
+                cur.pop();
+            }
+        }
     }
 
-    fn check_all_chunks(mut chunks: Chunks<char>) -> bool {
-        chunks.all(|c| Self::is_palindrome(c.iter().collect()))
-    }
-
-    fn is_palindrome(s: String) -> bool {
+    fn is_palindrome(s: &String) -> bool {
         let mut s2 = s.clone();
         for c1 in s.chars() {
             let c2 = s2.pop();
@@ -101,22 +89,22 @@ mod tests {
     #[test]
     fn test_palindrome() {
         let input = String::from("a");
-        assert!(Solution::is_palindrome(input));
+        assert!(Solution::is_palindrome(&input));
 
         let input = String::from("abba");
-        assert!(Solution::is_palindrome(input));
+        assert!(Solution::is_palindrome(&input));
 
         // uneven amount of input
         let input = String::from("abbba");
-        assert!(Solution::is_palindrome(input));
+        assert!(Solution::is_palindrome(&input));
     }
 
     #[test]
     fn test_invalid_palindrome() {
         let input = String::from("ab");
-        assert!(!Solution::is_palindrome(input));
+        assert!(!Solution::is_palindrome(&input));
 
         let input = String::from("abbar");
-        assert!(!Solution::is_palindrome(input));
+        assert!(!Solution::is_palindrome(&input));
     }
 }
