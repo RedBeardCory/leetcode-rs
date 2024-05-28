@@ -29,29 +29,47 @@ impl Solution {
             for (i, char) in alphabet.into_iter().enumerate() {
                 score_map.insert(char, *score.get(i).unwrap());
             }
-            let mut res = 0;
-            let mut index = 0;
-            let mut current_score = 0;
+            let index = 0;
+            let current_score = 0;
+            // let words = words.clone();
             // then we can use a dfs to get the best score for each combination of words and return the score
-            Self::dfs_best_score(
-                &mut res,
-                &letters,
-                &score_map,
-                &mut index,
-                &mut current_score,
-            )
+            Self::dfs_best_score(&possible_words, &letters, &score_map, index, current_score)
         }
     }
 
     pub fn dfs_best_score(
-        res: &mut i32,
+        words: &Vec<String>,
         letters: &Vec<char>,
         score_map: &HashMap<char, i32>,
-        index: &mut i32,
-        current_score: &mut i32,
+        index: usize,
+        current_score: i32,
     ) -> i32 {
         // end condition
-        // inside if, check if score is greater, if so replace it. We don't care about the exact sets
+        if index == words.len() {
+            return current_score;
+        }
+
+        // branch one: skip current word
+        let skip_branch_score =
+            Self::dfs_best_score(words, letters, score_map, index + 1, current_score);
+
+        let this_word_score = Self::calc_score(&words[index], &score_map);
+
+        let mut this_branch_score = 0;
+
+        // remove letters and continue down the tree if this word is able to be spelt
+        if Self::is_possible_to_spell(&words[index], &letters) {
+            let remaining_letters = Self::get_remaining_letters(&words[index], letters);
+            this_branch_score = Self::dfs_best_score(
+                words,
+                &remaining_letters,
+                score_map,
+                index + 1,
+                this_word_score + current_score,
+            );
+        }
+
+        return skip_branch_score.max(this_branch_score);
     }
 
     fn is_possible_to_spell(word: &String, letters: &Vec<char>) -> bool {
@@ -64,6 +82,14 @@ impl Solution {
             }
         }
         true
+    }
+
+    fn get_remaining_letters(word: &String, letters: &Vec<char>) -> Vec<char> {
+        let mut subset = letters.clone();
+        for char in word.chars() {
+            subset.remove(subset.iter().position(|x| *x == char).unwrap());
+        }
+        subset
     }
 
     fn calc_score(word: &String, score_map: &HashMap<char, i32>) -> i32 {
@@ -91,7 +117,7 @@ mod tests {
         let score = vec![
             1, 0, 9, 5, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ];
-        let expected = 21;
+        let expected = 23;
         assert_eq!(Solution::max_score_words(words, letters, score), expected);
     }
 
