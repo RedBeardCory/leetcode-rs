@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+mod nine;
 /// These are added here so that I get autocomplete from rust-analyser in vscode
 mod one;
 mod one_three_one;
